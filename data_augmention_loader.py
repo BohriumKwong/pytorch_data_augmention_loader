@@ -86,9 +86,11 @@ class augmention_dataset(data.Dataset):
         self.image_list = image_list
         self.samples = image_list
         self.transform = transform
+        self.mode = 1
         
     def setmode(self,mode=1):
-        self.mode = mode
+        if mode in [1,2]:
+            self.mode = mode
         """mode: while training it need to be set mode =2, then will return all images and target after\
                 data expansion with augmention method; while just predicting, it need to be set mode =1, \
                 in data loader's iterator. More details in the `__getitem__` method
@@ -98,8 +100,10 @@ class augmention_dataset(data.Dataset):
            P.S: You can shuffle data in each training epochs 
         """
         if shuffle_flag:
-            self.image_list = random.sample(self.image_list, len(self.image_list))                              
-        
+            if self.mode == 1:
+                self.image_list = random.sample(self.image_list, len(self.image_list))
+            elif self.mode == 2:
+                self.samples = random.sample(self.samples, len(self.samples))
         
     def maketraindata(self, repeat=0):
         """repeat: the values of how many times of your data expansion
@@ -117,7 +121,7 @@ class augmention_dataset(data.Dataset):
                     self.samples = self.samples + \
                         [(image_path,y/1000) for image_path in self.image_list]
                 
-                self.samples = random.sample(self.samples, len(self.samples))                    
+                self.shuffle_data(True)
     
     def __getitem__(self,index):
         if self.mode == 1:
@@ -179,6 +183,7 @@ if __name__ == '__main__':
         batch_size=32, shuffle=False,
         num_workers=0, pin_memory=False)
     
+    train_dset.shuffle_data(True)
     train_dset.setmode(2)
     train_dset.maketraindata(3)
     #以下是测试dataloader的demo
