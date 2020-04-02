@@ -26,30 +26,28 @@ class augmention_dataset(data.Dataset):
         sub_dir/class_y/DGF{'.jpg','.png','.bmp','.tif',...}
 
     You also can pass a list as one of args which include all the image whole path like this: ::
-        ['sub_dir/class_x/GGE.tif', 
-         'sub_dir/class_x/GGK.tif', 
-         'sub_dir/class_y/KNT.tif',
-         'sub_dir/class_y/DNV.tif',
+        ['sub_dir/class_x/GGE{'.jpg','.png','.bmp','.tif',...}', 
+         'sub_dir/class_x/GGK{'.jpg','.png','.bmp','.tif',...}', 
+         'sub_dir/class_y/KNT{'.jpg','.png','.bmp','.tif',...}',
+         'sub_dir/class_y/DNV{'.jpg','.png','.bmp','.tif',...}',
          #...#
          ]
         
     Args:
         sub_dir (string): Root directory path.
-        class_to_idx (dict): Dict with items (class_name, class_index).When the Args is None,it will \
-            be created automatic base on sub_dir(Args sub_dir and class_to_idx can not both be None)
-        image_list: List that include all the image whole path.When the Args is None,it will \
-            be created automatic base on sub_dir(Args sub_dir and class_to_idx can not both be None).\
-            P.S: the path of image in list can be different from each other (even if sub_dir)
+        class_to_idx (dict): Dict with items (class_name, class_index).When the Args is None,it will be created
+                             automaticly base on sub_dir(Args sub_dir and class_to_idx can not both be None)
+        image_list: List that include all the image whole path.When the Args is None,it will 
+                    be created automaticly base on sub_dir(Args sub_dir and class_to_idx can not both be None).
+            P.S: the path of image in list can be different from each other (even is different from sub_dir)
         transform (callable, optional): A function/transform that takes in
             a sample and returns a transformed version.
             E.g, ``transforms.RandomCrop`` for images.
-        repeat_flag: the values of how many times of your data expansion
-            by functional.adjust_hue augmention 
+
 
      Attributes:
-        classes (list): List of the class names.
-        samples (list): List of image sample path 
-        targets (int): The class_index value for each image 
+        samples (list): List of image sample tuple as (file_path,h_value)
+        mode (int): The status mode of dataloader,it is set to 1 when training ,set to 2 when just doing prediction
     """
     def __init__(self, sub_dir = None,class_to_idx = None, image_list = None, transform=None):
         if class_to_idx is None:
