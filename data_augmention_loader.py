@@ -97,7 +97,8 @@ class augmention_dataset(data.Dataset):
         """shuffle_flag:bool,shuffle input data or not,it is better to shuffle data begin training
            P.S: You can shuffle data in each training epochs 
         """
-        self.image_list = random.sample(self.image_list, len(self.image_list))                              
+        if shuffle_flag:
+            self.image_list = random.sample(self.image_list, len(self.image_list))                              
         
         
     def maketraindata(self, repeat=0):
