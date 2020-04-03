@@ -8,7 +8,7 @@ Created on Thu Apr  2 06:31:10 2020
 import torch.utils.data as data
 import torchvision.transforms.functional as functional
 from torchvision.datasets.folder import has_file_allowed_extension
-
+import copy
 import sys,os
 import random
 import PIL.Image as Image
@@ -82,7 +82,7 @@ class augmention_dataset(data.Dataset):
         
         self.class_to_idx = class_to_idx
         self.image_list = image_list
-        self.samples = image_list
+        self.samples = [(image_path,0,0) for image_path in self.image_list]
         self.transform = transform
         self.mode = 1
         
@@ -102,22 +102,42 @@ class augmention_dataset(data.Dataset):
                 self.image_list = random.sample(self.image_list, len(self.image_list))
             elif self.mode == 2:
                 self.samples = random.sample(self.samples, len(self.samples))
-        
+
+    def non_norm_sampling(self,h_value_low,h_value_high):
+        """this method make sure the color normalized image will not be put into data expansion processing
+        """
+        sample = []
+        for image_path in self.image_list:
+            if image_path.split("/")[-3].find('COLORNORM') == -1:
+            # 该条件针对有颜色转换的数据集使用,这里默认颜色转换的数据集文件夹名字带'COLORNORM'
+            #   针对这部分已经执行颜色转换的图片就不再进行颜色增强
+                sample.append((image_path,h_value_low,h_value_high))
+        return sample
+    
     def maketraindata(self, repeat=0):
         """repeat: the values of how many times of your data expansion
         by `functional.adjust_hue augmention`. 0 stands for no expansion.
         """
     #repeat这个参数用于是否对采样进行复制,如果进行复制,\
     #   就会在下面的_getitem_方法中对重复的样本进行不一样的颜色增强
+    # E.g,if repeat = 3,it will return:
+#        h_value_low,h_value_high
+#        -0.1       -0.034
+#        -0.034      0.032
+#        0.032       0.098
         if self.mode == 2:
-            if abs(repeat) == 0:
-                self.samples = [(image_path,0) for image_path in self.image_list]
-            else:
+            self.samples = [(image_path,0,0) for image_path in self.image_list]
+#            if abs(repeat) == 0:
+#                self.samples = [(image_path,0) for image_path in self.image_list]
+            if abs(repeat) > 0:
                 repeat = abs(repeat) if repeat % 2 == 1 else abs(repeat) + 1
-                self.samples = [(image_path,0) for image_path in self.image_list]
+#                self.samples = [(image_path,0) for image_path in self.image_list]
+                h_value_low = -0.1
                 for y in range(-100,int(100 + repeat/2),int(100*2/repeat)):
-                    self.samples = self.samples + \
-                        [(image_path,y/1000) for image_path in self.image_list]
+                    if h_value_low < y/1000:                      
+                        self.samples = self.samples + self.non_norm_sampling(h_value_low,y/1000)
+                        h_value_low = copy.deepcopy(y/1000)                        
+#                        [(image_path,y/1000) for image_path in self.image_list]
                 
                 self.shuffle_data(True)
     
@@ -138,19 +158,15 @@ class augmention_dataset(data.Dataset):
         
         elif self.mode == 2:
         # mode =2 为训练时使用,会返回增强后全部的图像和相应的label
-            image_path,h_value = self.samples[index]
+            image_path,h_value_low,h_value_high = self.samples[index]
             img = Image.open(image_path)
             if img.size != (224,224):
                 img = img.resize((224,224),Image.BILINEAR)           
-            if image_path.split("/")[-3].find('COLORNORM') == -1:
-                # 该条件针对有颜色转换的数据集使用,这里默认颜色转换的数据集文件夹名字带'COLORNORM'
-                #   针对这部分已经执行颜色转换的图片就不再进行颜色增强
-                if h_value > 0:
-                    hue_factor = random.uniform(h_value,0.1) 
-                    img = functional.adjust_hue(img,hue_factor)
-                elif h_value < 0:                
-                    hue_factor = random.uniform(-0.1,h_value)    
-                    img = functional.adjust_hue(img,hue_factor)
+#            if image_path.split("/")[-3].find('COLORNORM') == -1:
+            if h_value_low != 0 and h_value_high != 0:
+                hue_factor = random.uniform(h_value_low,h_value_high)
+                img = functional.adjust_hue(img,hue_factor)
+
             if self.transform is not None:
                 img = self.transform(img)
                                             
@@ -184,6 +200,7 @@ if __name__ == '__main__':
     train_dset.shuffle_data(True)
     train_dset.setmode(2)
     train_dset.maketraindata(3)
+    train_dset.shuffle_data(True)
     #以下是测试dataloader的demo
     with tqdm(train_loader, desc = 'Augmention data_loader testing', \
             file=sys.stdout) as iterator:
