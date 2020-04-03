@@ -209,5 +209,5 @@ if __name__ == '__main__':
             target = np.mean(target.cpu().numpy())
             info = (input.shape,target)
             iterator.set_postfix_str('test info :' + str(info))
-        iterator.set_postfix_str('Bacth count is ' + str(i+1))
+    print('Bacth count is ' + str(i+1),', len of dataset is '+ str(len(train_dset)))
 

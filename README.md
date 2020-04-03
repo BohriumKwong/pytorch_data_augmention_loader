@@ -47,7 +47,7 @@ train_dset.maketraindata(3)
 ```
 其中`setmode(2)`是将数据集设置为训练模式,只有在这个模式下才能进行数据增强的扩展。具体可参考**data_augmention_loader.py**代码。
 
-之后调用`maketraindata(3)`可以实现额外3+1倍的增强,传参的数字代表额外增强的倍数(一般要求是奇数,传参不是奇数也会处理为奇数)。
+之后调用`maketraindata(3)`可以实现额外3倍的增强,传参的数字代表额外增强的倍数(一般要求是奇数,传参不是奇数也会处理为奇数)。
 
 
 
@@ -62,6 +62,8 @@ Finded class:dog,total 200 files.
 
 Number of images: 400
 
-Augmention data_loader testing: 100%|██████████████████████| 63/63 [00:13<00:00,  5.55it/s, test info :((16, 3, 224, 224), 0.625)]
+Augmention data_loader testing: 100%|█████████████████████| 50/50 [00:08<00:00,  5.78it/s, test info :((32, 3, 224, 224), 0.5625)]
 
-> **原来的只有400张图片,但是用我这个脚本进行扩展之后,在batch=32的情况下能读取63个batch,约扩展到2000张。**
+Bacth count is 50, len of dataset is 1600
+
+> **原来的只有400张图片,但是用我这个脚本进行扩展之后,在batch=32的情况下能读取50个batch,约扩展到1600张。**
