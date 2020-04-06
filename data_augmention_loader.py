@@ -46,7 +46,7 @@ class augmention_dataset(data.Dataset):
 
 
      Attributes:
-        samples (list): List of image sample tuple as (file_path,h_value)
+        samples (list): List of image sample tuple as (file_path,h_value_lwo,h_value_high)
         mode (int): The status mode of dataloader,it is set to 1 when training ,set to 2 when just doing prediction
     """
     def __init__(self, sub_dir = None,class_to_idx = None, image_list = None, transform=None):
@@ -125,6 +125,7 @@ class augmention_dataset(data.Dataset):
 #        -0.1       -0.034
 #        -0.034      0.032
 #        0.032       0.098
+    # 之后参照下面的adjust_hue方法在分别在上述区间内随机生成hue_factor以进行h通道的增强
         if self.mode == 2:
             self.samples = [(image_path,0,0) for image_path in self.image_list]
 #            if abs(repeat) == 0:
@@ -136,8 +137,9 @@ class augmention_dataset(data.Dataset):
                 for y in range(-100,int(100 + repeat/2),int(100*2/repeat)):
                     if h_value_low < y/1000:                      
                         self.samples = self.samples + self.non_norm_sampling(h_value_low,y/1000)
-                        h_value_low = copy.deepcopy(y/1000)                        
-#                        [(image_path,y/1000) for image_path in self.image_list]
+                        h_value_low = copy.deepcopy(y/1000)
+                        #如果你的场景不需要考虑颜色转换以及颜色转换后增强的图片的问题,建议直接使用以下这句：
+#                        self.samples = self.samples + [(image_path,h_value_low,y/1000) for image_path in self.image_list]
                 
                 self.shuffle_data(True)
     
@@ -162,7 +164,6 @@ class augmention_dataset(data.Dataset):
             img = Image.open(image_path)
             if img.size != (224,224):
                 img = img.resize((224,224),Image.BILINEAR)           
-#            if image_path.split("/")[-3].find('COLORNORM') == -1:
             if h_value_low != 0 and h_value_high != 0:
                 hue_factor = random.uniform(h_value_low,h_value_high)
                 img = functional.adjust_hue(img,hue_factor)
