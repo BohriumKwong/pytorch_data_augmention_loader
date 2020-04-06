@@ -47,7 +47,7 @@ class augmention_dataset(data.Dataset):
 
      Attributes:
         samples (list): List of image sample tuple as (file_path,h_value_lwo,h_value_high)
-        mode (int): The status mode of dataloader,it is set to 1 when training ,set to 2 when just doing prediction
+        mode (int): The status mode of dataloader,it is set to 2 when training ,set to 1 when just doing prediction
     """
     def __init__(self, sub_dir = None,class_to_idx = None, image_list = None, transform=None):
         if class_to_idx is None:
